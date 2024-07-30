@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 export default function MainContent() {
   const [reciters, setReciters] = useState([]);
   const [moshafs, setMoshafs] = useState([]);
-  const [surahs, setSurahs] = useState([]);
+  const [surahs, setSurahs] = useState();
+  const [audio, setAudio] = useState();
   const language = "en";
 
   // async function getMoshaf(reciter){
@@ -24,7 +25,7 @@ export default function MainContent() {
   const getReciters = async () => {
     axios.get("https://mp3quran.net/api/v3/reciters").then((res) => {
       setReciters(res.data.reciters);
-      console.log(res.data.reciters);
+      // console.log(res.data.reciters);
       // console.log(res.data.reciters[0].moshaf);
     });
   };
@@ -37,12 +38,30 @@ export default function MainContent() {
         setMoshafs(res.data.reciters);
       });
   };
+
   const getSurah = async (surahServer, surahList) => {
     await axios.get(`https://mp3quran.net/api/v3/suwar`).then((res) => {
-      console.log(res.data.suwar);
-      setSurahs(res.data.suwar);
+      // console.log(res.data.suwar);
+      // console.log(surahServer);
+      // console.log(surahList);
+      const SurahName = res.data.suwar;
+      surahList = surahList.split(",");
+      surahList.map((surah) => {
+        const padSurah = surah.padStart(3, "0");
+        const valueOfServer = surahServer + padSurah + ".mp3";
+          SurahName.map((surahName) => {
+            if (surahName.id == surah) {
+              setSurahs(<option value={valueOfServer}>{surahName.name}</option>);
+              console.log(surahName)
+            }
+          })
+      });
     });
   };
+
+  function audioPlayer(surahMp3) {
+    setAudio((audioPlayer.src = surahMp3));
+  }
 
   useEffect(() => {
     getReciters();
@@ -59,12 +78,15 @@ export default function MainContent() {
             </label>
             <select
               className="selectReciters"
-              onClick={(e) => getMoshaf(e.target.value)}
+              onChange={(e) => getMoshaf(e.target.value)}
               name=""
             >
               {reciters.map((reciter) => (
-                <option value={reciter.id}>{reciter.name}</option>
+                <option value={reciter.id} key={reciter.id}>
+                  {reciter.name}
+                </option>
               ))}
+              <option>اختر القارئ</option>
             </select>
           </Col>
 
@@ -73,8 +95,13 @@ export default function MainContent() {
               اختر المصحف
             </label>
             <select
-              onClick={(e) => {
-                getSurah(e.target.value);
+              onChange={(e) => {
+                const surahServer = e.currentTarget.children[0].dataset.server;
+                const surahList = e.currentTarget.children[0].dataset.surahlist;
+                // console.log(e.currentTarget.children[0].dataset.server)
+                // console.log(e.currentTarget.children[0].dataset.surahlist)
+                // console.log();
+                getSurah(surahServer, surahList);
               }}
               className="selectReciters"
               name=""
@@ -84,6 +111,7 @@ export default function MainContent() {
                 return [
                   moshafreciter.moshaf.map((data) => (
                     <option
+                      key={data.id}
                       value={data.id}
                       data-server={data.server}
                       data-surahlist={data.surah_list}
@@ -93,6 +121,7 @@ export default function MainContent() {
                   )),
                 ];
               })}
+              <option>اختر المصحف</option>
             </select>
           </Col>
 
@@ -101,18 +130,22 @@ export default function MainContent() {
               اختر السورة
             </label>
             <select
-              onClick={(e) => console.log(e.target.value)}
+              onClick={(e) => {
+                audioPlayer(e.target.value);
+              }}
               className="selectReciters"
               name=""
             >
-              {surahs.map((surah) => (
-                <option value={surah.id}>{surah.name}</option>
-              ))}
+              {surahs}
+              <option>اختر السورة</option>
             </select>
           </Col>
         </Row>
-        <Row className="">faf</Row>
+        <Row className="">
+          <audio src={audio} controls autoPlay={false} />
+        </Row>
       </Container>
     </div>
   );
 }
+// style={{width:"100%"}}
